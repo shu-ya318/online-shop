@@ -1,0 +1,4 @@
+IF DB_ID(N'onlineShopDB') IS NULL
+BEGIN
+    CREATE DATABASE onlineShopDB;
+END;
