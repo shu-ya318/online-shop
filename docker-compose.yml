@@ -4,8 +4,14 @@ services:
       context: ./online-shop-frontend
     image: online-shop-frontend:latest
     container_name: online-shop-frontend
-    ports:
-      - 5173:80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`shuyahsieh.xyz`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      - "traefik.docker.network=online-shop-network"
     depends_on:
       backend:
         condition: service_healthy
@@ -23,8 +29,17 @@ services:
       context: ./online-shop-backend
     image: online-shop-backend:latest
     container_name: online-shop-backend
-    ports:
-      - 8080:8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`shuyahsieh.xyz`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.middlewares=backend-replacepath"
+      - "traefik.http.middlewares.backend-replacepath.replacepathregex.regex=^/api/(.*)"
+      - "traefik.http.middlewares.backend-replacepath.replacepathregex.replacement=/onlineShop/$$1"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+      - "traefik.docker.network=online-shop-network"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     env_file:
@@ -83,6 +98,34 @@ services:
       timeout: 5s
       retries: 5
 
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.email=shuyahsieh@example.com" # Please change this to your email
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt_data:/letsencrypt"
+    networks:
+      - online-shop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
 networks:
   online-shop-network:
     driver: bridge
@@ -91,4 +134,6 @@ volumes:
   mssql-data:
     driver: local
   redis-data:
+    driver: local
+  letsencrypt_data:
     driver: local
