@@ -1,6 +1,8 @@
 [submodule "online-shop-frontend"]
 	path = online-shop-frontend
 	url = https://github.com/shu-ya318/online-shop-frontend.git
+	branch = main
 [submodule "online-shop-backend"]
 	path = online-shop-backend
 	url = https://github.com/shu-ya318/online-shop-backend.git
+	branch = main
