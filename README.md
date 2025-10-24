@@ -155,9 +155,9 @@ A production-ready full-stack e-commerce application with complete user flow, RE
 
 ## Additional Documentation
 
-- **[Frontend README](./online-shop-frontend/README.md)**: Detailed guide for frontend development, including local setup, features showcase, and project structure.
+- **[Frontend README](https://github.com/shu-ya318/online-shop-frontend/blob/main/README.md)**: Detailed guide for frontend development, including local setup, features showcase, and project structure.
 
-- **[Backend README](./online-shop-backend/README.md)**: Detailed guide for backend development, including local setup, database schema, and API configuration.
+- **[Backend README](https://github.com/shu-ya318/online-shop-backend/blob/main/README.md)**: Detailed guide for backend development, including local setup, database schema, and API configuration.
 
 ## Contact
 
