@@ -31,11 +31,8 @@ services:
     container_name: online-shop-backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`shuyahsieh.xyz`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`shuyahsieh.xyz`) && PathPrefix(`/onlineShop`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.middlewares=backend-replacepath"
-      - "traefik.http.middlewares.backend-replacepath.replacepathregex.regex=^/api/(.*)"
-      - "traefik.http.middlewares.backend-replacepath.replacepathregex.replacement=/onlineShop/$$1"
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=8080"
@@ -103,12 +100,11 @@ services:
     container_name: traefik
     command:
       - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--certificatesresolvers.letsencrypt.acme.email=shuyahsieh@example.com" # Please change this to your email
+      - "--certificatesresolvers.letsencrypt.acme.email=shuyahsieh@example.com"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
     ports:
