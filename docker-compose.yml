@@ -31,12 +31,14 @@ services:
     container_name: online-shop-backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`shuyahsieh.xyz`) && PathPrefix(`/onlineShop`)"
+      - "traefik.http.routers.backend.rule=(Host(`shuyahsieh.xyz`) || Host(`localhost`)) && PathPrefix(`/onlineShop`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=8080"
       - "traefik.docker.network=online-shop-network"
+    ports:
+      - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     env_file:
