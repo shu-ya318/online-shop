@@ -8,7 +8,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`shuyahsieh.xyz`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls=true"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
       - "traefik.docker.network=online-shop-network"
@@ -31,9 +30,8 @@ services:
     container_name: online-shop-backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=(Host(`shuyahsieh.xyz`) || Host(`localhost`)) && PathPrefix(`/onlineShop`)"
+      - "traefik.http.routers.backend.rule=Host(`shuyahsieh.xyz`) && PathPrefix(`/onlineShop`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=8080"
       - "traefik.docker.network=online-shop-network"
@@ -98,26 +96,34 @@ services:
       retries: 5
 
   traefik:
-    image: traefik:v2.10
+    image: traefik:v3.6.9
     container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - online-shop-network
     command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
       - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=online-shop-network"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--certificatesresolvers.letsencrypt.acme.email=shuyahsieh@example.com"
+      - "--certificatesresolvers.letsencrypt.acme.email=shuyahsieh318@gmail.com"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
     ports:
       - "80:80"
       - "443:443"
+      - "8081:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "letsencrypt_data:/letsencrypt"
-    networks:
-      - online-shop-network
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "traefik", "healthcheck"]
       interval: 10s
