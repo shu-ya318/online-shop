@@ -11,7 +11,7 @@ A production-ready full-stack e-commerce application with complete user flow, RE
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         Traefik                             │
-│              (Reverse Proxy + SSL/TLS)                      │
+│              (Reverse Proxy + SSL/TLS (Let's Encrypt))      │
 │                  Port 80/443                                │
 └────────────┬─────────────────────────┬──────────────────────┘
              │                         │
@@ -25,7 +25,7 @@ A production-ready full-stack e-commerce application with complete user flow, RE
                        ┌───────────────┴───────────────┐
                        │                               │
                ┌───────▼──────┐                ┌───────▼──────┐
-               │   Database   │                │    Cache     │
+               │   Database   │                │ Session Store│
                │  (MS SQL     │                │   (Redis)    │
                │   Server)    │                │              │
                │  Port 1433   │                │  Port 6379   │
@@ -39,15 +39,14 @@ A production-ready full-stack e-commerce application with complete user flow, RE
 1. **Server Requirements**
 
    - Linux server (Ubuntu 20.04+, Debian 11+, or CentOS 7+ recommended)
-   - **Minimum**: 2 CPU cores, 4GB RAM, 30GB disk space
-   - **Recommended**: 2 CPU cores, 8GB RAM, 50GB SSD
+   - **Minimum**: 2 CPU cores, 6GB RAM, 30GB SSD
 
 2. **Software Requirements**
 
-   - Docker Engine: 28.5.0
-   - Docker Compose: v2.40.0
+   - Docker Engine: 29.2.1
+   - Docker Compose: 5.1.0
 
-      **Note**: This project is tested with the versions above. Other versions may work but compatibility is not guaranteed.
+   **Note**: This project is tested with the versions above. Other versions may work but compatibility is not guaranteed.
 
 3. **Domain & DNS**
 
@@ -81,7 +80,7 @@ A production-ready full-stack e-commerce application with complete user flow, RE
 
    Create a `.env` file in the project root. This file is ignored by Git and contains sensitive credentials for your services.
 
-   > **Note**: `docker-compose` automatically loads the `.env` file from the root directory.
+   **Note**: `docker-compose.yml` automatically loads the `.env` file from the root directory.
 
    ```.env
    # Database Configuration
@@ -97,70 +96,72 @@ A production-ready full-stack e-commerce application with complete user flow, RE
 
    #### a. Domain in `docker-compose.yml`
 
-   Edit `docker-compose.yml` and replace `shuyahsieh.xyz` with your actual domain. Also, update the email for Let's Encrypt SSL certificate generation.
-
-   > **Note**: You must replace `shuyahsieh.xyz` and the associated email address with your own information for the reverse proxy and SSL to work correctly.
-
    ```yaml
    # In "frontend" service labels:
    - "traefik.http.routers.frontend.rule=Host(`shuyahsieh.xyz`)"
 
    # In "backend" service labels:
-   - "traefik.http.routers.backend.rule=Host(`shuyahsieh.xyz`) && PathPrefix(`/api`)"
+   - "traefik.http.routers.backend.rule=Host(`shuyahsieh.xyz`) && PathPrefix(`/onlineShop`)"
 
    # In "traefik" service command:
    - "--certificatesresolvers.letsencrypt.acme.email=shuyahsieh318@gmail.com"
    ```
 
+   **Note**: Replace the domain and email in `docker-compose.yml` with your own. This is required for Let's Encrypt to issue SSL certificates correctly.
+
    #### b. Frontend API Endpoint
 
-   Before building the images, create a file named `.env.production` inside the `online-shop-frontend/` directory. This file configures the frontend to connect to the production API endpoint via the reverse proxy.
-
-   > **Note**: The domain here must match the one used in `docker-compose.yml`.
+   Before building the images, create a file named `.env.production` inside the `online-shop-frontend/` directory.
 
    ```.env
    # online-shop-frontend/.env.production
-   VITE_API_BASE_URL=https://shuyahsieh.xyz/api
+   VITE_API_BASE_URL=https://shuyahsieh.xyz/onlineShop
    ```
 
-5.  **Build and Deploy**
+   **Note**: Replace `shuyahsieh.xyz` with your actual domain.
 
-      ```bash
-      docker compose build
+5. **Automated Build and Deployment**
 
-      docker compose up -d
-      ```
+   This project utilizes **Docker Multi-stage builds** to encapsulate the entire compilation and packaging process (Maven for Java, NPM for Vue.js), ensuring environment consistency.
 
-6.  **Verify Deployment**
+   ```bash
+   # Build images (executes internal compilation and packaging)
+   docker compose build
 
-      (1).  **Check Service Health**
-         ```bash
-         # All services should show "healthy" status
-         docker compose ps
-         ```
+   # Start services in detached mode
+   docker compose up -d
+   ```
 
-      (2).  **Access the Application**
-         - Frontend: `https://shuyahsieh.xyz`
-         - Backend API: `https://shuyahsieh.xyz/api/`
+6. **Verify Deployment**
 
-      > **Note**: Replace `shuyahsieh.xyz` with your domain.
+   (1). **Check Service Health**
+   ```bash
+   # All services should show "healthy" status
+   docker compose ps
+   ```
 
-      (3).  **Verify SSL Certificate**
-         - Open your browser and navigate to your domain.
-         - Check for the padlock icon indicating that HTTPS is active and the certificate is issued by Let's Encrypt.
+   (2). **Access the Application**
+   - Frontend: `https://shuyahsieh.xyz`
+   - API Documentation (Swagger): `https://shuyahsieh.xyz/onlineShop/swagger-ui.html`
+   - API Health Status: `https://shuyahsieh.xyz/onlineShop/actuator/health`
 
-7.  **Database Initialization**
+   **Note**: Replace `shuyahsieh.xyz` with your actual domain.
 
-      The database is initialized automatically on the first startup.In this project, the `db-init` directory is mounted to this location, ensuring your tables and initial data are set up without manual intervention.
+   (3). **Verify SSL Certificate**
+   - Open your browser and navigate to your domain.
+   - Check for the padlock icon indicating that HTTPS is active and the certificate is issued by Let's Encrypt.
+
+7. **Database Initialization**
+
+   The database is initialized automatically on the first startup. In this project, the `db-init` directory is mounted to this location, ensuring your tables and initial data are set up without manual intervention.
 
 ## Additional Documentation
 
 - **[Frontend README](https://github.com/shu-ya318/online-shop-frontend/blob/main/README.md)**: Detailed guide for frontend development, including local setup, features showcase, and project structure.
-
 - **[Backend README](https://github.com/shu-ya318/online-shop-backend/blob/main/README.md)**: Detailed guide for backend development, including local setup, database schema, and API configuration.
 
 ## Contact
 
-- **Email**: shuyaHsieh318@gmail.com
+- **Email**: shuyahsieh318@gmail.com
 - **Cake**: https://www.cake.me/me/shuyahsieh
 - **Linkedin**: https://www.linkedin.com/in/%E6%B7%91%E9%9B%85-%E8%AC%9D-9906772b1/
